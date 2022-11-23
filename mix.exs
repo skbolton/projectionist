@@ -5,6 +5,7 @@ defmodule Projectionist.MixProject do
     [
       app: :projectionist,
       version: "0.1.0",
+      elixirc_paths: elixirc_paths(Mix.env()),
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -21,8 +22,11 @@ defmodule Projectionist.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:ecto_sql, "~> 3.0", optional: true},
+      {:postgrex, ">= 0.0.0", optional: true}
     ]
   end
+
+  defp elixirc_paths(:prod), do: ["lib"]
+  defp elixirc_paths(_devel), do: ["lib", "test/support"]
 end
