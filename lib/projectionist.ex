@@ -25,23 +25,25 @@ defmodule Projectionist do
   As an example here is a projection that sums transactions into an available
   balance.
 
-    def MyApp.AvailableBalanceProjection do
-      use Projectionist.Projection
-      alias MyApp.Transaction
+  ```elixir
+  def MyApp.AvailableBalanceProjection do
+    @behaviour Projectionist.Projection
+    alias MyApp.Transaction
 
-      @impl Projectionist.Projection
-      def init() do
-        initial_state = %{available_balance: Decimal.new(0)}
-        {:ok, initial_state}
-      end
-
-      @impl Projectionist.Projection
-      def project(%Transaction{value: value}, projection) do
-        Map.update!(projection, :available_balance, fn available_balance ->
-          Decimal.add(available_balance, value)
-        end)
-      end
+    @impl Projectionist.Projection
+    def init() do
+      initial_state = %{available_balance: Decimal.new(0)}
+      {:ok, initial_state}
     end
+
+    @impl Projectionist.Projection
+    def project(%Transaction{value: value}, projection) do
+      Map.update!(projection, :available_balance, fn available_balance ->
+        Decimal.add(available_balance, value)
+      end)
+    end
+  end
+  ```
 
   ## Readers
 
@@ -52,12 +54,14 @@ defmodule Projectionist do
   as a protocol to support reading from any data source. The following will show
   a SQL reader which will be most common.
 
-    sql_reader = Projectionist.Reader.SQL.new(
-      repo: MyApp.Repo,
-      queryable: MyApp.Transaction,
-      id: :account_id,
-      versioning_key: :transaction_datetime
-    )
+  ```elixir
+  sql_reader = Projectionist.Reader.SQL.new(
+    repo: MyApp.Repo,
+    queryable: MyApp.Transaction,
+    id: :account_id,
+    versioning_key: :transaction_datetime
+  )
+  ```
 
   ## Stores
 
@@ -66,30 +70,34 @@ defmodule Projectionist do
   to query the available balance of an account. Add stores somewhere in the
   supervision tree.
 
-    defmodule MyApp.AvailableBalanceStore do
-      use Projectionist.Store
-      alias MyApp.AvailableBalanceProjection
+  ```elixir
+  defmodule MyApp.AvailableBalanceStore do
+    use Projectionist.Store
+    alias MyApp.AvailableBalanceProjection
 
-      def start_link(_opts) do
-        sql_reader = Projectionist.Reader.SQL.new(
-          repo: MyApp.Repo,
-          queryable: MyApp.Transaction,
-          id: :account_id,
-          versioning_key: :transaction_datetime
-        )
+    def start_link(_opts) do
+      sql_reader = Projectionist.Reader.SQL.new(
+        repo: MyApp.Repo,
+        queryable: MyApp.Transaction,
+        id: :account_id,
+        versioning_key: :transaction_datetime
+      )
 
-        Projectionist.Store.start_link(
-          name: __MODULE__,
-          projection: AvailableBalanceProjection,
-          snapshot: nil,
-          source: sql_reader
-        )
-      end
+      Projectionist.Store.start_link(
+        name: __MODULE__,
+        projection: AvailableBalanceProjection,
+        snapshot: nil,
+        source: sql_reader
+      )
     end
+  end
+  ```
 
   Now we could get the balance of account `123`.
 
-    Projectionist.Store.get(MyApp.AvailableBalanceStore, "123")
+  ```elixir
+  Projectionist.Store.get(MyApp.AvailableBalanceStore, "123")
+  ```
 
   ## Windows
 
@@ -122,30 +130,36 @@ defmodule Projectionist do
 
   Emit a value in window
     
-    {:emit, value_to_emit, new_window_state}
+  ```elixir
+  {:emit, value_to_emit, new_window_state}
+  ```
 
   It is also possible to adjust the projection to reset some values. Its important to note
   that the current item has not yet been processed so a new projection value will be passed
   to the current iteration.
 
-    {:emit, value_to_emit, adjusted_projection, new_window_state}
+  ```elixir
+  {:emit, value_to_emit, adjusted_projection, new_window_state}
+  ```
 
   ### Example
 
   Using the previous example of getting an accounts balance at months ends here is a window
   definition and its usage.
 
-    period_ends = [~N[2020-02-01 00:00:00], ~N[2020-03-01 00:00:00]]
-    window = Projectionist.Window.trigger(period_ends, fn transaction, balance_projection, periods ->
-      [current_period | next_periods] = periods
+  ```elixir
+  period_ends = [~N[2020-02-01 00:00:00], ~N[2020-03-01 00:00:00]]
+  window = Projectionist.Window.trigger(period_ends, fn transaction, balance_projection, periods ->
+    [current_period | next_periods] = periods
 
-      if DateTime.compare(transaction.timestamp, current_period) == :gt do
-        {:emit, balance_projection, next_periods}
-      else
-        {:cont, balance_projection}
-    end)
+    if DateTime.compare(transaction.timestamp, current_period) == :gt do
+      {:emit, balance_projection, next_periods}
+    else
+      {:cont, balance_projection}
+  end)
 
-    {:ok, windows} = Projectionist.Store.get(AvailableBalanceStore, "123", window: window)
+  {:ok, windows} = Projectionist.Store.get(AvailableBalanceStore, "123", window: window)
+  ```
   """
 
   @typedoc """
@@ -182,4 +196,3 @@ defmodule Projectionist do
   """
   @type version :: term()
 end
-

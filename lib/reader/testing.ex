@@ -11,27 +11,33 @@ defmodule Projectionist.Reader.Testing do
   data source supplier. Any calls to get a data stream will run through the
   testing reader.
 
-    testing_reader = Projectionist.Reader.Testing.new()
-    {:ok, store} = MyApp.Store.start_link(source: testing_reader)
+  ```elixir
+  testing_reader = Projectionist.Reader.Testing.new()
+  {:ok, store} = MyApp.Store.start_link(source: testing_reader)
+  ```
 
   Now the testing reader can be used to control what values are returned and
   used to run projection over, allowing more focused tests of a projection and
   how it handles data.
 
-    # on next read from reader return no results (zero state of projection)
-    Testing.return(reader, [])
-    {:ok, projection} = Projectionist.Store.get(store, entity_id)
+  ```elixir
+  # on next read from reader return no results (zero state of projection)
+  Testing.return(reader, [])
+  {:ok, projection} = Projectionist.Store.get(store, entity_id)
 
-    # on next read return a few records
-    Testing.return(reader, [%{completed: true}, %{completed: false}])
-    {:ok, projection} = Projectionist.Store.get(store, entity_id)
+  # on next read return a few records
+  Testing.return(reader, [%{completed: true}, %{completed: false}])
+  {:ok, projection} = Projectionist.Store.get(store, entity_id)
+  ```
 
   It might also be desirable to set a fallback stubbed return for a reader. The
   stub will always be returned if no other return is given to the store
 
-    # default to returning an empty list
-    Testing.stub(reader, []) 
-    {:ok, projection} = Projectionist.Store.get(store, entity_id)
+  ```elixir
+  # default to returning an empty list
+  Testing.stub(reader, []) 
+  {:ok, projection} = Projectionist.Store.get(store, entity_id)
+  ```
   """
   defstruct [:pid]
 
@@ -40,12 +46,16 @@ defmodule Projectionist.Reader.Testing do
 
   Passing a value will configure the stubbed return for the reader.
 
-    Projectionist.Reader.Testing.new([%{state: :failed}, %{state: :successful}])
+  ```elixir
+  Projectionist.Reader.Testing.new([%{state: :failed}, %{state: :successful}])
+  ```
 
   Same as
 
-    Projectionist.Reader.Testing.new()
-    |> Projectionist.Reader.Testing.stub([%{state: :failed}, %{state: :successful}])
+  ```elixir
+  Projectionist.Reader.Testing.new()
+  |> Projectionist.Reader.Testing.stub([%{state: :failed}, %{state: :successful}])
+  ```
   """
   def new() do
     {:ok, pid} = Agent.start_link(fn -> {_stubs = nil, _expectations = [], _callbacks = []} end)

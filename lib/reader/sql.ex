@@ -19,23 +19,27 @@ defmodule Projectionist.Reader.SQL do
 
   Creating a reader for a snapshot stored in sql.
 
-    snapshot_reader = Projectionist.Reader.SQL.new(
-      repo: Projectionist.Repo,
-      queryable: Genesis.BankAccount.AvailableBalance.Snapshot,
-      id: :entity_id,
-      versioning_key: :version,
-      max_rows: 1000
-    )
+  ```elixir
+  snapshot_reader = Projectionist.Reader.SQL.new(
+    repo: Projectionist.Repo,
+    queryable: Genesis.BankAccount.AvailableBalance.Snapshot,
+    id: :entity_id,
+    versioning_key: :version,
+    max_rows: 1000
+  )
+  ```
 
   Creating a reader for a database table as a data source.
 
-    source_reader = Projectionist.Reader.SQL.new(
-      repo: Projectionist.Repo,
-      queryable: Genesis.Model.BankAccountTransaction,
-      id: :bank_account_id,
-      versioning_key: :initial_datetime,
-      max_rows: 2500
-    )
+  ```elixir
+  source_reader = Projectionist.Reader.SQL.new(
+    repo: Projectionist.Repo,
+    queryable: Genesis.Model.BankAccountTransaction,
+    id: :bank_account_id,
+    versioning_key: :initial_datetime,
+    max_rows: 2500
+  )
+  ```
   """
   import Ecto.Query
   alias Projectionist.Reader
